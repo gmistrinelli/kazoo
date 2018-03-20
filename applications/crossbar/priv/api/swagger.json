@@ -18450,6 +18450,9 @@
                 "Custom-SIP-Headers": {
                     "type": "object"
                 },
+                "Denied-Call-Restrictions": {
+                    "type": "string"
+                },
                 "Emergency-Caller-ID-Name": {
                     "type": "string"
                 },
@@ -20002,6 +20005,9 @@
                 "B-Leg-Events": {
                     "type": "string"
                 },
+                "Call-Restrictions-Enabled": {
+                    "type": "string"
+                },
                 "Callee-ID-Name": {
                     "type": "string"
                 },
@@ -20224,6 +20230,9 @@
                     "type": "string"
                 },
                 "B-Leg-Events": {
+                    "type": "string"
+                },
+                "Call-Restrictions-Enabled": {
                     "type": "string"
                 },
                 "Callee-ID-Name": {
