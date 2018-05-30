@@ -14,6 +14,7 @@ cache_test_() ->
                [{"key exists", fun wait_for_key_local_existing/0}
                ,{"key appears", fun wait_for_key_local_mid_stream/0}
                ,{"key timeout", fun wait_for_key_local_timeout/0}
+               ,{"load test", fun load/0}
                ]
        end
       }
@@ -56,3 +57,25 @@ wait_for_key_local_timeout() ->
 writer_job(Key, Value, Timeout) ->
     timer:sleep(Timeout div 2),
     kz_cache:store_local(?MODULE, Key, Value).
+
+load() ->
+    Fun = fun() ->
+              Key =  kz_binary:rand_hex(5),
+              Value =  kz_binary:rand_hex(5),
+              Timeout = 0,
+              writer_job(Key, Value, Timeout)
+          end,
+    Spawns = [spawn_monitor(Fun) || _ <- lists:seq(1,1)],
+    ?debugFmt("~nSpawns: ~p~n", [Spawns]),
+    wait_for(Spawns).
+
+wait_for([]) ->
+    'ok';
+wait_for([{Pid, Ref} | Spawns]) ->
+    ?debugFmt("Expecting Pid=~p, Ref=~p~n", [Pid, Ref]),
+    receive
+        {'DOWN', Ref, process, Pid, normal} -> wait_for(Spawns);
+        Reason ->
+            ?debugFmt("Got reason: ~p, exiting~n", [Reason]),
+            exit(Reason)
+    end.
