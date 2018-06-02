@@ -120,32 +120,39 @@ handle_cast({'job_status',{JobId, <<"start">>, JObj}}, #state{jobs=#{pending := 
                                                                     }=Jobs
                                                              }=State) ->
     ServerId = kz_api:server_id(JObj),
-    #{JobId := #{number := Number}} = Pending,
-    {'noreply', State#state{jobs=Jobs#{pending => maps:remove(JobId, Pending)
-                                      ,running => Running#{JobId => #{number => Number
-                                                                     ,queue => ServerId
-                                                                     ,start => kz_time:now_ms()
+    case Pending of
+        #{JobId := #{number := Number}
+         } -> {'noreply', State#state{jobs=Jobs#{pending => maps:remove(JobId, Pending)
+                                                ,running => Running#{JobId => #{number => Number
+                                                                                ,queue => ServerId
+                                                                                ,start => kz_time:now_ms()
+                                                                                }
                                                                      }
-                                                          }
-                                      }
-                           }, ?POLLING_INTERVAL
-    };
+                                                }
+                                      }, ?POLLING_INTERVAL
+              };
+        _ -> {'noreply', State}
+    end;
 handle_cast({'job_status',{JobId, <<"end">>, JObj}}, #state{jobs=#{pending := Pending
                                                                   ,running := Running
                                                                   ,numbers := Numbers
                                                                   }=Jobs
                                                            }=State) ->
     ServerId = kz_api:server_id(JObj),
-    #{JobId := #{queue := ServerId
-                ,number := Number
-                }
-     } = Running,
-    {'noreply', State#state{jobs=Jobs#{pending => maps:remove(JobId, Pending)
-                                      ,running => maps:remove(JobId, Running)
-                                      ,numbers => maps:remove(Number, Numbers)
-                                      }
-                           }, ?POLLING_INTERVAL
-    };
+    case Running of
+        #{JobId := #{queue := ServerId
+                    ,number := Number
+                    }
+         } ->
+              {'noreply', State#state{jobs=Jobs#{pending => maps:remove(JobId, Pending)
+                                                ,running => maps:remove(JobId, Running)
+                                                ,numbers => maps:remove(Number, Numbers)
+                                                }
+                                     }, ?POLLING_INTERVAL
+              };
+         _ ->
+              {'noreply', State}
+    end;
 handle_cast({'job_status',{JobId, <<"error">>, JObj}}, #state{jobs=Jobs
                                                              ,account_id=AccountId
                                                              }=State) ->
